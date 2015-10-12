@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 #
 # @File get_hochschulen.pl
-# @Author unrz59
 # @Created 09.10.2015 16:10:36
 #
 
