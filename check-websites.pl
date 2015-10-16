@@ -5,11 +5,6 @@
 # Auslesen von Websites aus einem Index und ueberpruefen nach
 # diversen Kriterien
 ##############################################################################
-use utf8;
-use Encode;
-binmode(STDOUT, ":utf8");
-binmode(STDIN, ":utf8");
-use open ':utf8';
 use Getopt::Long;
 use lib './WWW-Analyse/lib/';
 use WWW::Analyse;
@@ -253,6 +248,8 @@ sub analyse {
 			if (($liste[$i]->{'href'} =~ /^#/i) && (not $parameter->{'showanchor'})) {
 				next;
 			}
+			$liste[$i]->{'text'} =~ s/^\s*//gi;
+			$liste[$i]->{'text'} =~ s/\s*$//gi;
 			print "\t\t$liste[$i]->{'href'} ($liste[$i]->{'text'})\n";
 			$found =1;
 		}

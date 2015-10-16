@@ -92,7 +92,7 @@ sub findgenerator {
 	if ($generator) {
 		my $resgen;	
 		if ($generator =~ /^Web-Baukasten der/i) {
-			$resgen = "Webbaukasten";
+			$resgen = "RRZE Webbaukasten";
 		} elsif ($generator =~ /^Blogdienst der FAU/i) {
 			$resgen = "WordPress";
 			if ($generator =~ /([0-9\.]+)\s*$/i) {

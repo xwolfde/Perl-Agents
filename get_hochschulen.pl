@@ -19,6 +19,7 @@ my $CONST = {
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
     "max_update"    => 10,
+    "unityp"	    => 'staatlich',
 };
 
 my $params = GetParams();
@@ -41,11 +42,39 @@ $indexdata = Mergedata($indexdata,$olddata);
 $indexdata = UpdateHochschulData($indexdata,1);
 WriteHochschulData($indexdata);
 
+if ($params->{'listout'}) {
+    WriteList($indexdata);
+}
 exit;
 
 
 ###############################################################################
 # Subs
+###############################################################################
+sub WriteList {
+ my $data = shift;
+    my $file = $params->{'listout'};
+    
+    
+
+    if (-r $file) {
+	rename($file,"$file.old");
+    }
+    my $key;
+    my $subkey;
+
+    open(f1,">$file");
+	foreach $key (sort {$a <=> $b} keys %{$data}) {
+	    if (is_URL($data->{$key}->{'url'})) {
+		print f1 "Server ";
+		print f1 $data->{$key}->{'url'};
+		print f1 "\n";
+	    }
+	}
+    close f1;
+    print STDERR "Wrote URL list in $file\n" if ($params->{'debug'});
+
+}
 ###############################################################################
 sub Mergedata {
     my $list1 = shift;
@@ -116,12 +145,14 @@ sub WriteHochschulData {
 
     open(f1,">$file");
 	foreach $key (sort {$a <=> $b} keys %{$data}) {
-	    print f1 $key;
-	    print f1 "\t";
-	    foreach $subkey (keys %{$data->{$key}}) {
-		print f1 $subkey.": ".$data->{$key}->{$subkey}."\t";  
+	    if ($data->{$key}->{'wikiurl'}) {
+		print f1 $key;
+		print f1 "\t";
+		foreach $subkey (keys %{$data->{$key}}) {
+		    print f1 $subkey.": ".$data->{$key}->{$subkey}."\t";  
+		}
+		print f1 "\n";
 	    }
-	    print f1 "\n";
 	}
     close f1;
 
@@ -137,12 +168,22 @@ sub UpdateHochschulData() {
     my $gotdata =0;
     my $enough = 0;
     my $sleeptime;
+    my $pending;
 
     foreach $key (sort {$a <=> $b} keys %{$data}) {
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
-	    print STDERR "\tWikiurl: ".$data->{$key}->{'wikiurl'}."\n";
+	    print STDERR "\tWikiurl: \"".$data->{$key}->{'wikiurl'}."\"\n";
+	    print STDERR "\tlastcheck: ".localtime($data->{$key}->{'lastcheck'})."\n";
 	}
+	if (not $data->{$key}->{'wikiurl'}) {
+	    print STDERR "\t\tWikiURL invalid.\n";
+	    next;
+	}
+	if (($params->{"unityp"}) && ($data->{$key}->{'Traeger'}) && ($data->{$key}->{'Traeger'} ne $params->{"unityp"} )) {
+	    print STDERR "\t\tWrong typ: ".$data->{$key}->{'Traeger'}." Looking for: ".$params->{"unityp"}."\n";
+	    next;
+        }
 	    $cnt++;
 
 	    if (((not $data->{$key}->{'lastcheck'}) || ($data->{$key}->{'lastcheck'} < $thiscachetime)) && (not $enough)) {
@@ -151,8 +192,10 @@ sub UpdateHochschulData() {
 		}
 		$gotdata++;
 		$adddata = GetSingleWikiHochschule($data->{$key}->{'wikiurl'});
-		$sleeptime = int(rand(4))+1;
+		$sleeptime = int(rand(4))+1;		
+		print STDERR "\t\twaiting $sleeptime seconds...\n" if ($params->{'debug'});
 		sleep($sleeptime);
+
 		    # we dont want to brute force wikipedia
 		if ($adddata->{'url'}) {
 		    $data->{$key}->{'lastcheck'} = $adddata->{'time'};    
@@ -160,18 +203,26 @@ sub UpdateHochschulData() {
 			$adddata->{'url'} = 'http://'.$adddata->{'url'};
 		    }
 		    $data->{$key}->{'url'} = $adddata->{'url'};
-		    print "\tURL: $data->{$key}->{'url'}\n";
+		    if ($params->{'debug'}) {
+			print "\tURL: $data->{$key}->{'url'}\n";
+			print "\tset lastcheck time to ".localtime($data->{$key}->{'lastcheck'})."\n";
+		    }
 		}
 
-		if (($CONST->{"max_update"}) && ($gotdata>$CONST->{"max_update"})) {
+		if (($params->{"maxupdate"}) && ($gotdata>$params->{"maxupdate"})) {
 		    $enough = 1;
 		    # again: we dont want to make a brute force on wikipedia
+		    next;
 		}
 
 	    }
+	if ((not $data->{$key}->{'lastcheck'}) || ($data->{$key}->{'lastcheck'} < $thiscachetime)) {
+	    $pending++;
+	}
 	   
     }	
-    print "gefundene Einträge: ".$cnt."\n";
+    print "Found: ".$cnt."\n";
+    print "Pending Entries: $pending\n";
     return $data;
     
 }
@@ -200,8 +251,8 @@ sub GetSingleWikiHochschule {
     	my $req = HTTP::Request->new(GET => $url);
 	    	# Pass request to the user agent and get a response back
 	my $res;
-
-	$res->{'time'} = time;
+	my $out;
+	$out->{'time'} = time;
 
 	eval {
 		alarm(10);
@@ -210,7 +261,7 @@ sub GetSingleWikiHochschule {
 			# ok, continue
 		} else {		
 			warn "Cannot connect to $url  - Error ".$res->code."\n";
-			return $res;
+			return $out;
 		}
 	};
 	alarm(0);
@@ -219,8 +270,8 @@ sub GetSingleWikiHochschule {
  		        warn "request timed out";
      		} else {
          		warn "error in request: $@";
-    		 }
-		return $res;
+    		}
+		return $out;
  	}
 	my $plaincontent;	    	
 	my $statuscode = $res->code;
@@ -228,7 +279,8 @@ sub GetSingleWikiHochschule {
 	if ($res->is_success) {
 	    $html = $res->decoded_content;  # or whatever
 	} else {
-	    die $res->status_line;
+	    warn $res->status_line;
+	    return $out;
 	}
 
 
@@ -245,12 +297,12 @@ sub GetSingleWikiHochschule {
 	    foreach $ts ($te->tables) {
 		foreach $row ($ts->rows) {		    
 		    if ($row->[0] =~/website/i) {
-			$res->{'url'} = $row->[1];
+			$out->{'url'} = $row->[1];
 		    }
 		}
 	    }
 	}
-	return $res;
+	return $out;
 
 
 }
@@ -395,25 +447,44 @@ sub GetParams {
     my $result;
     my $debug =1;
     my $usecache =0;
+    my $listout;
+    my $maxupdate = $CONST->{"max_update"};
+    my $unityp;
+
 
     my $options = GetOptions(
 			    "help|h|?"		=> \$help,
 			    "debug" => \$debug,
 			    "nocache" => \$usecache,
+			    "listout=s" => \$listout,
+			    "maxupdate=s"   => \$maxupdate,
+			    "unityp=s"	 => \$unityp,
 			);
 					
 	
 	if ($help) {
 		print "$0 [Options]\n";
 		print "Options could be:\n";
-		print "\tdebug -  Debugmode on\n";  
-		print "\tnocache - Load list from web not from local cache\n";
-		
+		print "\tdebug            -  Debugmode on\n";  
+		print "\tnocache          - Load list from web not from local cache\n";
+		print "\tmaxupdate=".$maxupdate." - How many URLs to get in this session from Mediawiki\n";
+		print "\tlistout=FILENAME - Prints out index with valid URLs in a file, that may be used as input file for MnoGoSearch and check-website.pl.\n";
+		print "\tunityp=staatlich|privat - Filter for kind of university\n";
 		exit;
 	}
 
+    $listout =~s/[^a-z0-9\-\/\._]*//gi;
+
     $result->{'debug'} = $debug;	    
     $result->{'nocache'} = $usecache;	
+    if (length($listout)>1) {
+       $result->{'listout'} = $listout;	
+    }
+    if (($maxupdate) && ($maxupdate>0)) {
+	$result->{'maxupdate'} = $maxupdate;
+    } else {
+	$result->{'maxupdate'} = $CONST->{"max_update"};
+    }
 
     return $result;
 }
