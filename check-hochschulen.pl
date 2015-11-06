@@ -71,10 +71,6 @@ sub analyselist {
 	$gen = "Unbekannt" if (not $gen);
 	$data->{$key}->{'generator'} = $gen;
 
-	$links = $website->getdocumentlinks();
-	my @liste = @{$links};
-	$data->{$key}->{'linknum'} = $#liste;
-
 	$tracker = $website->listtracker();
 	$data->{$key}->{'tracker'} = $tracker;
 
