@@ -6,6 +6,8 @@
 # diversen Kriterien
 ##############################################################################
 use Getopt::Long;
+use open qw/:std :encoding(utf8)/;
+use utf8;
 use lib './WWW-Analyse/lib/';
 use WWW::Analyse;
 use strict;

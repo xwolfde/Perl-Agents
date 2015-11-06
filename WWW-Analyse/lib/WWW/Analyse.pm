@@ -3,6 +3,7 @@ package WWW::Analyse;
 use 5.008008;
 use LWP::UserAgent;
 use HTML::Parser;
+use Encode      qw( decode encode );
 use strict;
 use warnings;
 
@@ -14,6 +15,41 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
 our $VERSION = '0.01';
 
+
+##############################################################################
+sub get_pagetitle {
+    my $obj = shift;
+    if (not $obj) {
+	return;
+    }
+    my $title = $obj->getheader("Title");
+    if (ref($title) eq 'ARRAY') {
+	my $i;
+	my @tl = @{$title};
+	my $res;
+	for ($i=0;$i<=$#tl;$i++) {
+	    $res .= decode( "utf8", $tl[$i])." | ";
+	    
+	}
+	$res =~ s/ \| $//g;
+	return $res;
+    } else {
+	return decode( "utf8", $title);
+    }
+
+}
+##############################################################################
+sub listtracker {
+    my $obj = shift;
+    if (not $obj) {
+	return;
+    }
+    my $found = $obj->findtracker();
+    if ($found) {
+	return $obj->{'body'}->{'data'}->{'tracker'};
+    }
+    return; 
+}
 ##############################################################################
 sub findtracker {
 	my $obj = shift;
@@ -228,8 +264,14 @@ sub get {
 	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0 );
     	$ua->agent($obj->useragent());
     		# Create a request
-	
-    	my $req = HTTP::Request->new(GET => $url);
+	$ua->default_header(
+	    'Accept-Language' => 'de,en-US;q=0.7,en;q=0.3',
+	    'Accept-Charset' => 'utf-8',
+	    'Accept' => 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, image/png, */*'
+	);
+
+
+#    	my $req = HTTP::Request->new(GET => $url);
 	    	# Pass request to the user agent and get a response back
 	my $res;
 
@@ -450,7 +492,7 @@ sub getheader {
 				last;
 			}		
 		}
-		return 	$obj->response->{'_headers'}->{$var};
+		return $obj->response->{'_headers'}->{$var};
 		
 	}
 }
@@ -460,7 +502,7 @@ sub getcontent {
 	if (not $self->status) {
 		return;	
 	}
-	return $self->response->decoded_content((charset => 'UTF-8'));	
+	return $self->response->decoded_content(default_charset => 'UTF-8');	
 }
 ##############################################################################
 sub statuscode {

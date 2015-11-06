@@ -4,21 +4,25 @@
 # @Created 09.10.2015 16:10:36
 #
 
+use open qw/:std :encoding(utf8)/;
+use utf8;
+
 use strict;
 use Getopt::Long;
 use LWP::UserAgent;
 use HTML::TableExtract;
 use CheckRFC;
+use JSON;
 
 
 my $CONST = {
     "source_url"    => 	'https://de.wikipedia.org/wiki/Liste_der_Hochschulen_in_Deutschland',
     "wikibase_url"  => 'https://de.wikipedia.org',
     "cache_file" => 'Liste_der_Hochschulen_in_Deutschland.html',
-    "output"	=> 'Liste_der_Hochschulen_in_Deutschland.tab',
+    "json_output"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
-    "max_update"    => 10,
+    "max_update"    => 20,
     "unityp"	    => 'staatlich',
 };
 
@@ -54,7 +58,6 @@ exit;
 sub WriteList {
  my $data = shift;
     my $file = $params->{'listout'};
-    
     
 
     if (-r $file) {
@@ -103,30 +106,18 @@ sub Mergedata {
 ###############################################################################
 sub GetCachedHochschulData {
     my $data;
-    my $file = $CONST->{'output'};  
-    
+    my $jsonfile = $CONST->{'json_output'};
 
-    if (-r $file) {
-	my $key;
-	my $subkey;
-	my @content;
-	my $i;
-	my ($name, $value);
+    if (-r $jsonfile) {
 
-	open(f1,"<$file");
-	while(<f1>) {
-	    $_ =~ s/\s*$//gi;
-	    @content = split(/\t/,$_);
-	    $key = $content[0];
-	    for ($i=1; $i<=$#content; $i++) {
-		($name, $value) = split(/: /,$content[$i],2);
-		$data->{$key}->{$name} = $value;
-	    }
-	}
-	close f1;
+        open( my $fh, '<', $jsonfile );
+	my $json_text   = <$fh>;
+	$data = decode_json( $json_text );
+	close $fh;
 	return $data;
+
     }  else {
-	print STDERR "Es wurden noch keine Daten gespeichert in $file\n" if ($params->{'debug'});
+	print STDERR "Es wurden noch keine Daten gespeichert in $jsonfile\n" if ($params->{'debug'});
 	return;
     }
 
@@ -135,25 +126,15 @@ sub GetCachedHochschulData {
 ###############################################################################
 sub WriteHochschulData {
     my $data = shift;
-    my $file = $CONST->{'output'};
+    my $jsonfile = $CONST->{'json_output'};
     
-    if (-r $file) {
-	rename($file,"$file.old");
+    if (-r $jsonfile) {
+	rename($jsonfile,"$jsonfile.old");
     }
-    my $key;
-    my $subkey;
 
-    open(f1,">$file");
-	foreach $key (sort {$a <=> $b} keys %{$data}) {
-	    if ($data->{$key}->{'wikiurl'}) {
-		print f1 $key;
-		print f1 "\t";
-		foreach $subkey (keys %{$data->{$key}}) {
-		    print f1 $subkey.": ".$data->{$key}->{$subkey}."\t";  
-		}
-		print f1 "\n";
-	    }
-	}
+    my $utf8_encoded_json_text = encode_json $data;
+    open(f1,">$jsonfile");
+    print f1 $utf8_encoded_json_text;
     close f1;
 
 }
@@ -169,6 +150,7 @@ sub UpdateHochschulData() {
     my $enough = 0;
     my $sleeptime;
     my $pending;
+    my $jsonfile = $CONST->{'json_output'};
 
     foreach $key (sort {$a <=> $b} keys %{$data}) {
 	if ($params->{'debug'}) {
