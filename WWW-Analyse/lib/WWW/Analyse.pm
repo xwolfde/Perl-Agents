@@ -67,44 +67,30 @@ sub findtracker {
 		# Suche nach Google Analytics
 		$obj->{'body'}->{'data'}->{'tracker'}->{'Google-Analytics'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'Google-Analytics'} =0;
 	}
 	if ($content =~ /piwik\.php/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'Piwik'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'Piwik'} =0;
 	} 	
 	if ($content =~ /sitemeter\.com\/meter\.asp/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'Sitemeter'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'Sitemeter'} =0;
 	} 	
 	if ($content =~ /statse\.webtrendslive\.com\/dc/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'Webtrendslive'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'Webtrendslive'} =0;
 	} 	
 	if ($content =~ /prof\.estat\.com\/m/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'eStat'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'eStat'} =0;
 	} 	
 	if ($content =~ /ivwbox\.de\/cgi\-bin\/ivw/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'IVW'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'IVW'} =0;
 	} 	
 	if ($content =~ /www\.etracker\.de/i) {
 		$obj->{'body'}->{'data'}->{'tracker'}->{'eTracker'} =1;
 		$foundtracker =1;
-	} else {
-		$obj->{'body'}->{'data'}->{'tracker'}->{'etracker'} =0;
 	} 		
 	return  $foundtracker;
 }
