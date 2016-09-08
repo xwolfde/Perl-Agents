@@ -16,13 +16,13 @@ use JSON;
 
 
 my $CONST = {
-    "source_url"    => 	'https://de.wikipedia.org/wiki/Liste_der_Hochschulen_in_Deutschland',
-    "wikibase_url"  => 'https://de.wikipedia.org',
-    "cache_file" => 'Liste_der_Hochschulen_in_Deutschland.html',
-    "json_output"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
+    "source_url"    => 	'https://en.wikipedia.org/wiki/List_of_research_universities_in_the_United_States',
+    "wikibase_url"  => 'https://en.wikipedia.org',
+    "cache_file" => 'Liste_der_Hochschulen_in_us.html',
+    "json_output"	=> 'Liste_der_Hochschulen_in_us.json',
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
-    "max_update"    => 500,
+    "max_update"    => 40,
     "unityp"	    => 'staatlich',
 };
 
@@ -268,57 +268,20 @@ sub GetSingleWikiHochschule {
 
 	
 	if ($html) {
-	    print STDERR "\t\t\tExtract Tabelle mit Unidaten\n" if ($params->{'debug'});
+	    print STDERR "\t\tExtract Tabelle mit Unidaten\n" if ($params->{'debug'});
 
-	    my $te = HTML::TableExtract->new( keep_html => 1, attribs => { id => 'Vorlage_Infobox_Hochschule' } );
+	    my $te = HTML::TableExtract->new();
 	    $te->parse($html);    
 	   
 	    my $ts;
 	    my $row;
-	    my $name;
-	    my $value;
-	    my $n = 1;
+
 	    foreach $ts ($te->tables) {
-		if ($ts->{'attribs'}->{'id'} eq 'Vorlage_Infobox_Hochschule') {
-			foreach $row ($ts->rows) {	
-			    $name = $row->[0];
-			    $value = $row->[1];
-
-			    $name =~ s/^\s*//gi;
-			    $name =~ s/\s*$//gi;
-			    $value =~ s/^\s*//gi;
-			    $value =~ s/\s*$//gi;
-
-			    
-	#		    print STDERR "\t".$name." => ".$value."\n";
-
-			    if ($name && $value) {
-
-				if ($name =~ /(Studenten|Mitarbeiter|davon Professoren)/i) {
-				    ($value, undef) = split(/ /,$value,2);
-				    $out->{$name} = $value;
-				} elsif ($name =~/website/i) {
-				    if ($value =~ /href=\"([^"><]+)\"/i) {
-					    $out->{'url'} = $1;
-					    
-				    } else {
-					    $value =~s/<([^<>]+)>//gi;
-					    $out->{'url'} = $value;
-				    }
-				    $out->{'url'} =~ s/\/$//gi;
-				} else {
-				    # Remove HTML
-				    $value =~s/<([^<>]+)>//gi;
-				    # Remove Cite-Numbers
-				    $value =~ s/\[([0-9]+)\]//gi;
-				    $out->{$name} = $value;
-				}	    
-			    }
-
-			}
-			$n++;
+		foreach $row ($ts->rows) {		    
+		    if ($row->[0] =~/website/i) {
+			$out->{'url'} = $row->[1];
+		    }
 		}
-		
 	    }
 	}
 	return $out;
@@ -349,11 +312,8 @@ sub ExtractHochschulen {
 #	print "Table found at ", join(',', $ts->coords), ":\n";
 	foreach $row ($ts->rows) {
 	    $name = $row->[0];
-	    $land = $row->[1];
-	    $traeger= $row->[2];
-	    $gruendung = $row->[4];
-	    $studis = $row->[5];
-	    $stand = $row->[6];
+	    $land = $row->[3];
+	    $traeger= $row->[1];
 	    if ($name=~ /href=\"([^\"]+)\"/i) {
 		$url = $1;
 		$name =~ s/<.+?>//gi;
@@ -361,19 +321,10 @@ sub ExtractHochschulen {
 		    $url = $CONST->{"wikibase_url"}.$url;
 		}
 	    }
-	    $studis =~ s/<span(.+)span>//gi;
-	    if ($params->{'debug'}) {
-		 #  print "$name ($url)\n";
-		#  print "\t $studis Studierende ($stand), Typ: $traeger, Gründung: $gruendung\n";
-	    }
 	    
 	    $data->{$name}->{'Name'} = $name;
 	    $data->{$name}->{'wikiurl'} = $url;
-	    $data->{$name}->{'ZahlStudierende'} = $studis;
 	    $data->{$name}->{'Traeger'} = $traeger;
-	    $data->{$name}->{'Gruendung'} = $gruendung;
-	    $data->{$name}->{'Stand'} = $stand;
-		
 
 	}
     }

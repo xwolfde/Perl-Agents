@@ -1,0 +1,47 @@
+Hochschule Anhalt (Bernburg, Dessau und Köthen):
+https://de.wikipedia.org/wiki/Hochschule_Anhalt:
+ URL (http://HS) error on read: 500
+Medizinische Hochschule Brandenburg Theodor Fontane:
+https://de.wikipedia.org/wiki/Medizinische_Hochschule_Brandenburg_Theodor_Fontane:
+ URL (http://Medizinische) error on read: 500
+Evangelische Hochschule Darmstadt:
+https://de.wikipedia.org/wiki/Evangelische_Hochschule_Darmstadt:
+ URL (http://www.eh-darmstadt.de) error on read: 500
+ESMOD Internationale Kunsthochschule für Mode (Berlin):
+https://de.wikipedia.org/wiki/ESMOD_Internationale_Kunsthochschule_f%C3%BCr_Mode:
+ URL () invalid or empty
+HAWK Hochschule Hildesheim/Holzminden/Göttingen:
+https://de.wikipedia.org/wiki/HAWK_Hochschule_Hildesheim/Holzminden/G%C3%B6ttingen:
+ URL (http://hawk-hhg.de) error on read: 500
+IB-Hochschule Berlin:
+https://de.wikipedia.org/wiki/IB-Hochschule_Berlin:
+ URL (http://IB) error on read: 500
+Universität Rostock:
+https://de.wikipedia.org/wiki/Universit%C3%A4t_Rostock:
+ URL (http://uni-rostock.de) error on read: 500
+Name:
+:
+ URL () invalid or empty
+Hochschule für internationale Wirtschaft und Logistik (Bremen):
+https://de.wikipedia.org/wiki/Hochschule_f%C3%BCr_internationale_Wirtschaft_und_Logistik:
+ URL (http://Offizielle) error on read: 500
+Deutsche Universität für Weiterbildung:
+https://de.wikipedia.org/wiki/Deutsche_Universit%C3%A4t_f%C3%BCr_Weiterbildung:
+ URL () invalid or empty
+Internationale Hochschule Bad Honnef · Bonn:
+https://de.wikipedia.org/wiki/Internationale_Hochschule_Bad_Honnef_%C2%B7_Bonn:
+ URL (http://www.iubh.de
+www.iubh-fernstudium.de) invalid or empty
+Hochschule für Medien, Kommunikation und Wirtschaft (Berlin):
+https://de.wikipedia.org/wiki/Hochschule_f%C3%BCr_Medien,_Kommunikation_und_Wirtschaft:
+ URL (http://www.hmkw.de
+www.facebook.com/hmkw.berlin) invalid or empty
+FH Aachen:
+https://de.wikipedia.org/wiki/FH_Aachen:
+ URL (http://www.fh-aachen.de) error on read: 500
+ESCP Europe Campus Berlin:
+https://de.wikipedia.org/wiki/ESCP_Europe_Campus_Berlin:
+ URL (http://ESCP-Campus) error on read: 500
+Adam-Ries-Fachhochschule (Erfurt):
+https://de.wikipedia.org/wiki/Adam-Ries-Fachhochschule:
+ URL () invalid or empty

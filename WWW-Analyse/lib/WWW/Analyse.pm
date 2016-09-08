@@ -15,6 +15,12 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
 our $VERSION = '0.01';
 
+my $matchgenlist = {
+    'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
+    'Total WordPress Theme 3.5.2'   => 'WordPress',
+    'Rails Connector for Infopark CMS Fiona by Infopark AG (www.infopark.de)'	=> 'Inforpark CMS Fiona',
+    'UniMR CMS (Plone - http://plone.org)'  => 'Plone',
+};
 
 ##############################################################################
 sub get_pagetitle {
@@ -120,6 +126,8 @@ sub findgenerator {
 			if ($generator =~ /([0-9\.]+)\s*$/i) {
 			   $resgen  .= " ".$1;
 			}
+		} elsif ($matchgenlist->{$generator}) {
+		    $resgen = $matchgenlist->{$generator};
 		} else {
 			$resgen = $generator;
 		}
@@ -143,6 +151,59 @@ sub findgenerator {
 		$generator = "WebsiteBaker";
 	}
 	return $generator;
+}
+##############################################################################
+sub normalize_generator {
+    my $obj = shift;
+    if (not $obj) {
+		return;
+	}
+    my $gen = shift;
+
+    my $name;
+    my $version;
+    my $result;
+
+    if ($gen =~ /^TYPO3/i) {
+	$name = "TYPO3";
+	if ($gen =~ /^TYPO3\s+([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    } elsif ($gen =~ /^Plone/i) {
+	$name = "Plone";
+	
+    } elsif ($gen =~ /^Contao Open/i) {
+	$name = "Contao";
+    } elsif ($gen =~ /^Drupal/i) {
+	$name = "Drupal";
+	if ($gen =~ /^Drupal\s+([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    } elsif ($gen =~ /^ZMS/i) {
+	$name = "ZMS";
+    } elsif ($gen =~ /^Imperia/i) {
+	$name = "Imperia";
+	if ($gen =~ /^Imperia\s+([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    } elsif ($gen =~ /^Infopark CMS Fiona/i) {
+	$name = "Infopark CMS Fiona";
+	if ($gen =~ /^Infopark CMS Fiona;\s+([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    } elsif ($gen =~ /^Rails Connector for Infopark CMS Fiona/i) {
+	$name = "Infopark CMS Fiona";
+	if ($gen =~ /Version ([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    }
+    
+    $result = $name;
+    if ($version) {
+	$result .= ';'.$version;
+    }
+    
+    return $result;
 }
 ##############################################################################
 sub webbaukasten {
@@ -188,7 +249,9 @@ sub webbaukasten {
 	if ($obj->{'body'}->{'data'}->{'webbaukasten'} eq "1") {
 		# Alte Version, vor 9.7.2009  oder Versionen die keinen metatag fuehren
 		# versuche Version zu ermitteln.
-	        if ($content =~ /\/patches\/patch.css" rel="stylesheet" type="text\/css" \/>/i) {
+		if ($content =~ /\/css\/fau\-2016\/layout\.css/i) {
+                        $obj->{'body'}->{'data'}->{'webbaukasten'} = "FAU-Design 2016";
+                } elsif ($content =~ /\/patches\/patch.css" rel="stylesheet" type="text\/css" \/>/i) {
 			$obj->{'body'}->{'data'}->{'webbaukasten'} = "07/2011";
 		} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=iso\-8859\-1"/i) {
 			$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";

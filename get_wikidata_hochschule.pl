@@ -1,8 +1,5 @@
 #!/usr/bin/perl
-#
-# @File get_hochschulen.pl
-# @Created 09.10.2015 16:10:36
-#
+
 
 use open qw/:std :encoding(utf8)/;
 use utf8;
@@ -22,7 +19,7 @@ my $CONST = {
     "json_output"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
-    "max_update"    => 500,
+    "max_update"    => 40,
     "unityp"	    => 'staatlich',
 };
 
@@ -43,12 +40,10 @@ if (($params->{'nocache'}!=1) && (-r $CONST->{"cache_file"})) {
 my $indexdata = ExtractHochschulen($page);
 my $olddata = GetCachedHochschulData();
 $indexdata = Mergedata($indexdata,$olddata);
-$indexdata = UpdateHochschulData($indexdata,1);
-WriteHochschulData($indexdata);
 
-if ($params->{'listout'}) {
-    WriteList($indexdata);
-}
+SearchHochschuldata($indexdata,$params->{'search'});
+
+
 exit;
 
 
@@ -139,8 +134,10 @@ sub WriteHochschulData {
 
 }
 ###############################################################################
-sub UpdateHochschulData() {
+sub SearchHochschuldata() {
     my $data = shift;
+    my $search = shift;
+
     my $key;
     my $check;
     my $cnt;
@@ -152,59 +149,37 @@ sub UpdateHochschulData() {
     my $pending;
     my $jsonfile = $CONST->{'json_output'};
 
+    use Data::Dumper;
+    $search= 'Friedrich-Alexander-Universität Erlangen-Nürnberg';
+
     foreach $key (sort {$a <=> $b} keys %{$data}) {
-	if ($params->{'debug'}) {
-	    print STDERR $key."\n";
-	    print STDERR "\tWikiurl: \"".$data->{$key}->{'wikiurl'}."\"\n";
-	    print STDERR "\tlastcheck: ".localtime($data->{$key}->{'lastcheck'})."\n";
-	}
-	if (not $data->{$key}->{'wikiurl'}) {
-	    print STDERR "\t\tWikiURL invalid.\n";
-	    next;
-	}
-	if (($params->{"unityp"}) && ($data->{$key}->{'Traeger'}) && ($data->{$key}->{'Traeger'} ne $params->{"unityp"} )) {
-	    print STDERR "\t\tWrong typ: ".$data->{$key}->{'Traeger'}." Looking for: ".$params->{"unityp"}."\n";
-	    next;
-        }
-	    $cnt++;
+    
+	if (($search) && ($key =~ /$search/i)) { 
 
-	    if (((not $data->{$key}->{'lastcheck'}) || ($data->{$key}->{'lastcheck'} < $thiscachetime)) && (not $enough)) {
-		if ($params->{'debug'}) {
-			print STDERR "\tUpdate data\n";
-		}
-		$gotdata++;
-		$adddata = GetSingleWikiHochschule($data->{$key}->{'wikiurl'});
-		$sleeptime = int(rand(4))+1;		
-		print STDERR "\t\twaiting $sleeptime seconds...\n" if ($params->{'debug'});
-		sleep($sleeptime);
+	    print  $key."\n";
 
-		    # we dont want to brute force wikipedia
-		if ($adddata->{'url'}) {
-		    $data->{$key}->{'lastcheck'} = $adddata->{'time'};    
-		    if ($adddata->{'url'} !~ /^(f|ht|)tp(s*):\/\//i) {
-			$adddata->{'url'} = 'http://'.$adddata->{'url'};
-		    }
-		    $data->{$key}->{'url'} = $adddata->{'url'};
-		    if ($params->{'debug'}) {
-			print "\tURL: $data->{$key}->{'url'}\n";
-			print "\tset lastcheck time to ".localtime($data->{$key}->{'lastcheck'})."\n";
-		    }
-		}
-
-		if (($params->{"maxupdate"}) && ($gotdata>$params->{"maxupdate"})) {
-		    $enough = 1;
-		    # again: we dont want to make a brute force on wikipedia
-		    next;
-		}
-
+	    print  "\tWikiurl: \"".$data->{$key}->{'wikiurl'}."\"\n";
+	    print  "\tlastcheck: ".localtime($data->{$key}->{'lastcheck'})."\n";
+	
+	    if (not $data->{$key}->{'wikiurl'}) {
+		print "\t\tWikiURL invalid.\n";
+		next;
 	    }
-	if ((not $data->{$key}->{'lastcheck'}) || ($data->{$key}->{'lastcheck'} < $thiscachetime)) {
-	    $pending++;
+	    
+	    print "Dump Olddata:\n";
+	    print "###############################################################################\n";
+	    print Dumper($data->{$key});
+	    print "###############################################################################\n";
+	    
+	    $adddata = GetSingleWikiHochschule($data->{$key}->{'wikiurl'});
+	    
+	    print "Newdata from Wiki\n";
+	    print "###############################################################################\n";
+	    print Dumper($adddata);	
+	    print "###############################################################################\n";
+
 	}
-	   
     }	
-    print "Found: ".$cnt."\n";
-    print "Pending Entries: $pending\n";
     return $data;
     
 }
@@ -223,7 +198,7 @@ sub GetSingleWikiHochschule {
 
 
     my $url =  $thisurl;
-    print STDERR "\t\tRufe Wikiseite ab: $url\n" if ($params->{'debug'});
+    print STDERR "Rufe Wikiseite ab: $url\n" if ($params->{'debug'});
  	
     local $SIG{ALRM} = sub { die "timeout\n" };
 
@@ -268,7 +243,7 @@ sub GetSingleWikiHochschule {
 
 	
 	if ($html) {
-	    print STDERR "\t\t\tExtract Tabelle mit Unidaten\n" if ($params->{'debug'});
+	    print STDERR "Extract Tabelle mit Unidaten\n" if ($params->{'debug'});
 
 	    my $te = HTML::TableExtract->new( keep_html => 1, attribs => { id => 'Vorlage_Infobox_Hochschule' } );
 	    $te->parse($html);    
@@ -289,7 +264,8 @@ sub GetSingleWikiHochschule {
 			    $value =~ s/^\s*//gi;
 			    $value =~ s/\s*$//gi;
 
-			    
+			    # Remove Cite-Numbers
+			    $value =~ s/\[([0-9]+)\]//gi;
 	#		    print STDERR "\t".$name." => ".$value."\n";
 
 			    if ($name && $value) {
@@ -307,10 +283,7 @@ sub GetSingleWikiHochschule {
 				    }
 				    $out->{'url'} =~ s/\/$//gi;
 				} else {
-				    # Remove HTML
 				    $value =~s/<([^<>]+)>//gi;
-				    # Remove Cite-Numbers
-				    $value =~ s/\[([0-9]+)\]//gi;
 				    $out->{$name} = $value;
 				}	    
 			    }
@@ -469,15 +442,13 @@ sub GetParams {
     my $listout;
     my $maxupdate = $CONST->{"max_update"};
     my $unityp;
-
+    my $searchname;
 
     my $options = GetOptions(
 			    "help|h|?"		=> \$help,
 			    "debug" => \$debug,
 			    "nocache" => \$usecache,
-			    "listout=s" => \$listout,
-			    "maxupdate=s"   => \$maxupdate,
-			    "unityp=s"	 => \$unityp,
+			    "name=s"	=> \$searchname,
 			);
 					
 	
@@ -486,9 +457,7 @@ sub GetParams {
 		print "Options could be:\n";
 		print "\tdebug            -  Debugmode on\n";  
 		print "\tnocache          - Load list from web not from local cache\n";
-		print "\tmaxupdate=".$maxupdate." - How many URLs to get in this session from Mediawiki\n";
-		print "\tlistout=FILENAME - Prints out index with valid URLs in a file, that may be used as input file for MnoGoSearch and check-website.pl.\n";
-		print "\tunityp=staatlich|privat - Filter for kind of university\n";
+		print "\tname=String	    - Wikiname for university to look for\n";
 		exit;
 	}
 
@@ -496,14 +465,8 @@ sub GetParams {
 
     $result->{'debug'} = $debug;	    
     $result->{'nocache'} = $usecache;	
-    if (length($listout)>1) {
-       $result->{'listout'} = $listout;	
-    }
-    if (($maxupdate) && ($maxupdate>0)) {
-	$result->{'maxupdate'} = $maxupdate;
-    } else {
-	$result->{'maxupdate'} = $CONST->{"max_update"};
-    }
+   
+    $result->{'search'} = $searchname;
 
     return $result;
 }

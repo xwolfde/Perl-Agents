@@ -21,6 +21,8 @@ my $CONST = {
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
     "max_update"    => 20,
+    "errorurl_file" => 'error-urls.txt',
+    "current_csv_file"	=> 'current.csv',
 };
 
 my $params = GetParams();
@@ -47,13 +49,26 @@ sub analyselist {
 	my $links;
 	my $tracker;
 	my $title;
-	
+
+	open(f3,">".$CONST->{'errorurl_file'});
+	open(f4,">".$CONST->{'current_csv_file'});
+
+
     foreach $key (sort {$a <=> $b} keys %{$data}) {
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
 	}
-	
+	if (($data->{$key}->{'url'}) && (!is_URL($data->{$key}->{'url'}))) {
+	    # Eintrag vorhanden, aber inkorrekte Syntax.
+	    if ($data->{$key}->{'url'} =~ /\s+/i) {
+		# Falls mehrere URLs in der Zeile
+		($data->{$key}->{'url'},undef) = split(/ /,$data->{$key}->{'url'},2);
+	    }
+	}
 	if ( (not $data->{$key}->{'url'}) || (!is_URL($data->{$key}->{'url'}))) {
+	    print f3 $data->{$key}->{'Name'}.":\n";
+	    print f3 $data->{$key}->{'wikiurl'}.":\n";
+	    print f3 " URL (".$data->{$key}->{'url'}.") invalid or empty\n";
 	    print STDERR "\t\tURL invalid or empty\n";
 	    next;
 	}
@@ -63,14 +78,28 @@ sub analyselist {
 	$website->url($url);		
 	my $status = $website->get();
 	if ($status==0) {
+	        print f3 $data->{$key}->{'Name'}.":\n";
+		print f3 $data->{$key}->{'wikiurl'}.":\n";
+	        print f3 " URL (".$data->{$key}->{'url'}.") error on read: ".$website->statuscode()."\n";
 		print STDERR "Fehler. Website konnte nicht ausgelesen werden. Code: ", $website->statuscode(), "\n";
 		next;
 	}
 	
 	$gen =$website->findgenerator();				
-	$gen = "Unbekannt" if (not $gen);
-	$data->{$key}->{'generator'} = $gen;
-
+	$gen =~s/^\s*//gi;
+	$gen =~s/\s*$//gi;
+	if (not $gen) {
+	    $data->{$key}->{'generator'}  = "Unbekannt" 
+	} else {
+	    my $ngen = $website->normalize_generator($gen);
+	    my $version;
+	    ($gen,$version) = split(/;/,$ngen,2);
+	    $data->{$key}->{'generator'} = $gen;	
+	    if ($version) {
+		$data->{$key}->{'generator-version'} = $version;
+	    }
+	}
+	
 	$tracker = $website->listtracker();
 	$data->{$key}->{'tracker'} = $tracker;
 
@@ -79,13 +108,26 @@ sub analyselist {
 
 	if ($params->{'debug'}) {
 	    print  "\t$url\n";
+	     print  "\tName: ".$data->{$key}->{'Name'}."\n";
 	    print  "\tTitle: $title\n";
-	    print  "\tGenerator: $gen\n";
+	    print  "\tGenerator: \"".$data->{$key}->{'generator'}."\"\n";
 	    print  "\n";
 	}
-
+	print f4 $data->{$key}->{'Name'}.";";
+	print f4 $data->{$key}->{'url'}.";";
+	print f4 $data->{$key}->{'generator'};
+	if ($data->{$key}->{'generator-version'}) {
+	    print f4 ";";
+	    print f4 $data->{$key}->{'generator-version'};
+	}
+	print f4 "\n";
+	
+	
     }	
   
+    close f4;
+    close f3;
+
    return $data;
 
 }
