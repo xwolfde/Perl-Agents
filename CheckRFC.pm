@@ -187,7 +187,7 @@ BEGIN {
   my $hsegment       =  "(?:(?:$httpuchar|[;:\@&=~])*)";
   my $search         =  "(?:(?:$httpuchar|[;:\@&=~])*)";
   my $hpath          =  "(?:$hsegment(?:/$hsegment)*)";
-  my $httpurl        =  "(?:http://$hostport(?:/$hpath(?:\\?$search)?)?(?:#$xchar*)?)";
+  my $httpurl        =  "(?:http(s)?://$hostport(?:/$hpath(?:\\?$search)?)?(?:#$xchar*)?)";
 
   # GOPHER (see also RFC1436)
   my $gopher_plus    =  "(?:$xchar*)";

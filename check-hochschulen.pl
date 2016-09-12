@@ -20,7 +20,7 @@ my $CONST = {
     "json_index"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
     "useragent"	=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
-    "max_update"    => 20,
+    "max_update"    => 200,
     "errorurl_file" => 'error-urls.txt',
     "current_csv_file"	=> 'current.csv',
 };
@@ -51,10 +51,14 @@ sub analyselist {
 	my $title;
 
 	open(f3,">".$CONST->{'errorurl_file'});
-	open(f4,">".$CONST->{'current_csv_file'});
+	open(f4,">".$params->{'current_csv_file'});
+	print f4 "Name\tURL\tCMS\tVersion\n";
 
+    foreach $key (sort keys %{$data}) {
 
-    foreach $key (sort {$a <=> $b} keys %{$data}) {
+	$data->{$key}->{'Name'} =~s/&amp;/&/gi;
+
+	next if not $key;
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
 	}
@@ -82,29 +86,34 @@ sub analyselist {
 		print f3 $data->{$key}->{'wikiurl'}.":\n";
 	        print f3 " URL (".$data->{$key}->{'url'}.") error on read: ".$website->statuscode()."\n";
 		print STDERR "Fehler. Website konnte nicht ausgelesen werden. Code: ", $website->statuscode(), "\n";
-		next;
-	}
-	
-	$gen =$website->findgenerator();				
-	$gen =~s/^\s*//gi;
-	$gen =~s/\s*$//gi;
-	if (not $gen) {
-	    $data->{$key}->{'generator'}  = "Unbekannt" 
+		
+		$gen = "Unbekannt"; 
+		$data->{$key}->{'generator'} = $gen;
 	} else {
-	    my $ngen = $website->normalize_generator($gen);
-	    my $version;
-	    ($gen,$version) = split(/;/,$ngen,2);
-	    $data->{$key}->{'generator'} = $gen;	
-	    if ($version) {
-		$data->{$key}->{'generator-version'} = $version;
-	    }
-	}
 	
-	$tracker = $website->listtracker();
-	$data->{$key}->{'tracker'} = $tracker;
+	    $gen =$website->findgenerator();		
+	    $gen =~s/^\s*//gi;
+	    $gen =~s/\s*$//gi;
+	    if (not $gen) {
+		$gen  = "Unbekannt"; 
+	    } else {
+		my $ngen = $website->normalize_generator($gen);
+		my $version;
+		($gen,$version) = split(/;/,$ngen,2);
+		if (not $gen) {
+		    $gen = $ngen;
+		} elsif ($version) {
+		    $data->{$key}->{'generator-version'} = $version;
+		}
+	    }
+	    $data->{$key}->{'generator'} = $gen;
+	
+	    $tracker = $website->listtracker();
+	    $data->{$key}->{'tracker'} = $tracker;
 
-	$title = $website->get_pagetitle();
-	$data->{$key}->{'sitetitle'} = $title;
+	    $title = $website->get_pagetitle();
+	    $data->{$key}->{'sitetitle'} = $title;
+	}
 
 	if ($params->{'debug'}) {
 	    print  "\t$url\n";
@@ -113,11 +122,11 @@ sub analyselist {
 	    print  "\tGenerator: \"".$data->{$key}->{'generator'}."\"\n";
 	    print  "\n";
 	}
-	print f4 $data->{$key}->{'Name'}.";";
-	print f4 $data->{$key}->{'url'}.";";
+	print f4 $data->{$key}->{'Name'}."\t";
+	print f4 $data->{$key}->{'url'}."\t";
 	print f4 $data->{$key}->{'generator'};
 	if ($data->{$key}->{'generator-version'}) {
-	    print f4 ";";
+	    print f4 "\t";
 	    print f4 $data->{$key}->{'generator-version'};
 	}
 	print f4 "\n";
@@ -176,7 +185,7 @@ sub GetParams {
     my $listout;
     my $maxupdate = $CONST->{"max_update"};
     my $unityp;
-
+    my $cvsoutfile = $CONST->{'current_csv_file'};
 
     my $options = GetOptions(
 			    "help|h|?"		=> \$help,
@@ -185,6 +194,7 @@ sub GetParams {
 			    "listout=s" => \$listout,
 			    "maxupdate=s"   => \$maxupdate,
 			    "unityp=s"	 => \$unityp,
+			    "csvout=s"	=> \$cvsoutfile,
 			);
 					
 	
@@ -208,7 +218,7 @@ sub GetParams {
     } else {
 	$result->{'maxupdate'} = $CONST->{"max_update"};
     }
-
+    $result->{'current_csv_file'} = $cvsoutfile;
 
     return $result;
 }

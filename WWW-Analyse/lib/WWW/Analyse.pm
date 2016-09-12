@@ -18,7 +18,7 @@ our $VERSION = '0.01';
 my $matchgenlist = {
     'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
     'Total WordPress Theme 3.5.2'   => 'WordPress',
-    'Rails Connector for Infopark CMS Fiona by Infopark AG (www.infopark.de)'	=> 'Inforpark CMS Fiona',
+    'Rails Connector for Infopark CMS Fiona by Infopark AG (www.infopark.de)'	=> 'Infopark CMS Fiona',
     'UniMR CMS (Plone - http://plone.org)'  => 'Plone',
 };
 
@@ -34,13 +34,13 @@ sub get_pagetitle {
 	my @tl = @{$title};
 	my $res;
 	for ($i=0;$i<=$#tl;$i++) {
-	    $res .= decode( "utf8", $tl[$i])." | ";
-	    
+	   # $res .= decode( "utf8", $tl[$i])." | ";
+	    $res .= $tl[$i]." | "; 
 	}
 	$res =~ s/ \| $//g;
 	return $res;
     } else {
-	return decode( "utf8", $title);
+	return $title; # decode( "utf8", $title);
     }
 
 }
@@ -65,8 +65,8 @@ sub findtracker {
 	 if (not $obj->{'parserstatus'}) {
                 $obj->parser();
         }
-        my $foundtracker;
-        
+        my $foundtracker = 0;
+        $obj->{'body'}->{'data'}->{'tracker'} = ();
 	
 	my $content = $obj->getcontent();
 	if (($content =~ /_uacct/i) || ($content =~ /_gat\._getTracker\(/i)) {
@@ -149,6 +149,21 @@ sub findgenerator {
 		$generator = "Dreamweaver";
 	} elsif ($content =~ /\/modules\/output_filter/i) {
 		$generator = "WebsiteBaker";
+	} elsif ($content =~ /This website is powered by Neos/i) {
+		$generator = "Neos";
+	} elsif ($content =~ /jQuery\.extend\(Drupal\.settings/i) {
+		$generator = "Drupal";
+	} elsif ($content =~ /Drupal.extend\(/i) {
+		$generator = "Drupal";
+	} elsif ($content =~/\/wGlobal\/layout/i) {
+	    $generator = "Weblication Content Management Server";
+	} elsif ($content =~ /typo3temp/i) {
+		$generator = "TYPO3";
+	} elsif ($content =~ /default\.aspx/i) {
+		$generator = "Microsoft SharePoint";
+
+	} elsif ($content =~ /powered by TYPO3/i) {
+		$generator = "TYPO3";
 	}
 	return $generator;
 }
@@ -167,6 +182,11 @@ sub normalize_generator {
     if ($gen =~ /^TYPO3/i) {
 	$name = "TYPO3";
 	if ($gen =~ /^TYPO3\s+([0-9\.]+)/i) {
+	    $version = $1;
+	} 
+    } elsif ($gen =~ /^WordPress/i) {
+	$name = "WordPress";
+	if ($gen =~ /^WordPress\s+([0-9\.]+)/i) {
 	    $version = $1;
 	} 
     } elsif ($gen =~ /^Plone/i) {
@@ -196,6 +216,13 @@ sub normalize_generator {
 	if ($gen =~ /Version ([0-9\.]+)/i) {
 	    $version = $1;
 	} 
+    } elsif ($gen =~ /^Cabacos CMS/i) {
+	$name = "Cabacos CMS";
+	if ($gen =~ /^Cabacos CMS\s+\(Version ([0-9\.]+)\)/i) {
+	    $version = $1;
+	} 
+    } else {
+	return $gen;
     }
     
     $result = $name;
@@ -343,6 +370,7 @@ sub get {
          		warn "error in request: $@";
     		 }
 		 $obj->status(0);
+		
 		return 0;
  	}
 	my $plaincontent;	    	
