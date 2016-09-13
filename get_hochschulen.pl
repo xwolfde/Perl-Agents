@@ -111,24 +111,6 @@ sub GetCachedHochschulData {
     if (-r $jsonfile) {
 	
  $data = retrieve($jsonfile);
-
-
-
-	#my $json_text = do {
-	#   open(my $json_fh, "<:encoding(UTF-8)", $jsonfile)
-	#   open(my $json_fh, "<", $jsonfile)
-	 #     or die("Can't open \$jsonfile\": $!\n");
-	  # local $/;
-	 #  <$json_fh>
-#	};
-
-#	my $json = JSON->new->utf8;
-#	$data = $json->decode($json_text);
-
-        #open( my $fh, "<:encoding(UTF-8)", $jsonfile );
-	#my $json_text   = <$fh>;
-	#$data = decode_json( $json_text );
-	#close $fh;
 	return $data;
 
     }  else {
@@ -146,12 +128,6 @@ sub WriteHochschulData {
     if (-r $jsonfile) {
 	rename($jsonfile,"$jsonfile.old");
     }
-
- #   my $utf8_encoded_json_text = encode_json $data;
- #   open(f1,">$jsonfile");
- #   print f1 $utf8_encoded_json_text;
- #   close f1;
-
      store $data, $jsonfile;
     
 }
@@ -290,11 +266,11 @@ sub GetSingleWikiHochschule {
 
 	if ($res->is_success) {
 
-	    if ($res->content_charset eq 'UTF-8') {
+	#    if ($res->content_charset eq 'UTF-8') {
 		$html = $res->decoded_content;  # or whatever
-	    } else {
-		$html = $res->decoded_content('UTF-8');;  # or whatever
-	    }
+	#    } else {
+	#	$html = $res->decoded_content('UTF-8');;  # or whatever
+	 #   }
 	   
 	} else {
 	    warn $res->status_line;
