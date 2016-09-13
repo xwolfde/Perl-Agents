@@ -6,22 +6,21 @@
 #
 
 
-use open qw/:std :encoding(utf8)/;
 use utf8;
 use CheckRFC;
-use JSON;
 use strict;
 use Getopt::Long;
 use lib './WWW-Analyse/lib/';
 use WWW::Analyse;
-
+use Storable;
+use open qw/:std :encoding(utf8)/;
 
 my $CONST = {
-    "json_index"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
-    "useragent"	=> 'Mozilla/5.0',
+    "store_file"	=> 'Hochschulen.store',
+    "useragent"		=> 'Mozilla/5.0',
     "cachetime_single"	=> 60*60*24*7*30,
-    "max_update"    => 200,
-    "errorurl_file" => 'error-urls.txt',
+    "max_update"	=> 500,
+    "errorurl_file"	=> 'error-urls.txt',
     "current_csv_file"	=> 'current.csv',
 };
 
@@ -55,9 +54,7 @@ sub analyselist {
 	print f4 "Name\tURL\tCMS\tVersion\n";
 
     foreach $key (sort keys %{$data}) {
-
 	$data->{$key}->{'Name'} =~s/&amp;/&/gi;
-
 	next if not $key;
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
@@ -117,7 +114,7 @@ sub analyselist {
 
 	if ($params->{'debug'}) {
 	    print  "\t$url\n";
-	     print  "\tName: ".$data->{$key}->{'Name'}."\n";
+	    print  "\tName: ".$data->{$key}->{'Name'}."\n";
 	    print  "\tTitle: $title\n";
 	    print  "\tGenerator: \"".$data->{$key}->{'generator'}."\"\n";
 	    print  "\n";
@@ -144,14 +141,11 @@ sub analyselist {
 ###############################################################################
 sub GetCachedHochschulData {
     my $data;
-    my $jsonfile = $CONST->{'json_index'};
+    my $jsonfile = $CONST->{'store_file'};
 
     if (-r $jsonfile) {
-
-        open( my $fh, '<', $jsonfile );
-	my $json_text   = <$fh>;
-	$data = decode_json( $json_text );
-	close $fh;
+    
+	$data = retrieve($jsonfile);
 	return $data;
 
     }  else {
@@ -164,23 +158,20 @@ sub GetCachedHochschulData {
 ###############################################################################
 sub WriteHochschulData {
     my $data = shift;
-    my $jsonfile = $CONST->{'json_index'};
+    my $jsonfile = $CONST->{'store_file'};
     
     if (-r $jsonfile) {
 	rename($jsonfile,"$jsonfile.old");
     }
 
-    my $utf8_encoded_json_text = encode_json $data;
-    open(f1,">$jsonfile");
-    print f1 $utf8_encoded_json_text;
-    close f1;
+    store $data, $jsonfile;
 
 }
 ###############################################################################
 sub GetParams {
     my $help;
     my $result;
-    my $debug =0;
+    my $debug =1;
     my $usecache =0;
     my $listout;
     my $maxupdate = $CONST->{"max_update"};

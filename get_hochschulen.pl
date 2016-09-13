@@ -5,24 +5,25 @@
 #
 
 use utf8;
-
 use strict;
 use Getopt::Long;
 use LWP::UserAgent;
 use HTML::TableExtract;
 use CheckRFC;
-use JSON;
+use Storable;
+use open qw/:std :encoding(utf8)/;
+
 
 
 my $CONST = {
-    "source_url"    => 	'https://de.wikipedia.org/wiki/Liste_der_Hochschulen_in_Deutschland',
-    "wikibase_url"  => 'https://de.wikipedia.org',
-    "cache_file" => 'Liste_der_Hochschulen_in_Deutschland.html',
-    "json_output"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
-    "useragent"	=> 'Mozilla/5.0',
-    "cachetime_single"	=> 1, #60*60*24*7*30,
-    "max_update"    => 500,
-    "unityp"	    => 'staatlich',
+    "source_url"	=> 'https://de.wikipedia.org/wiki/Liste_der_Hochschulen_in_Deutschland',
+    "wikibase_url"	=> 'https://de.wikipedia.org',
+    "cache_file"	=> 'Hochschulen.html',
+    "store_file"	=> 'Hochschulen.store',
+    "useragent"		=> 'Mozilla/5.0',
+    "cachetime_single"	=> 60*60*24*7*30,
+    "max_update"	=> 500,
+    "unityp"		=> 'staatlich',
 };
 
 my $params = GetParams();
@@ -105,14 +106,29 @@ sub Mergedata {
 ###############################################################################
 sub GetCachedHochschulData {
     my $data;
-    my $jsonfile = $CONST->{'json_output'};
+    my $jsonfile = $CONST->{'store_file'};
 
     if (-r $jsonfile) {
+	
+ $data = retrieve($jsonfile);
 
-        open( my $fh, '<', $jsonfile );
-	my $json_text   = <$fh>;
-	$data = decode_json( $json_text );
-	close $fh;
+
+
+	#my $json_text = do {
+	#   open(my $json_fh, "<:encoding(UTF-8)", $jsonfile)
+	#   open(my $json_fh, "<", $jsonfile)
+	 #     or die("Can't open \$jsonfile\": $!\n");
+	  # local $/;
+	 #  <$json_fh>
+#	};
+
+#	my $json = JSON->new->utf8;
+#	$data = $json->decode($json_text);
+
+        #open( my $fh, "<:encoding(UTF-8)", $jsonfile );
+	#my $json_text   = <$fh>;
+	#$data = decode_json( $json_text );
+	#close $fh;
 	return $data;
 
     }  else {
@@ -125,17 +141,19 @@ sub GetCachedHochschulData {
 ###############################################################################
 sub WriteHochschulData {
     my $data = shift;
-    my $jsonfile = $CONST->{'json_output'};
+    my $jsonfile = $CONST->{'store_file'};
     
     if (-r $jsonfile) {
 	rename($jsonfile,"$jsonfile.old");
     }
 
-    my $utf8_encoded_json_text = encode_json $data;
-    open(f1,">$jsonfile");
-    print f1 $utf8_encoded_json_text;
-    close f1;
+ #   my $utf8_encoded_json_text = encode_json $data;
+ #   open(f1,">$jsonfile");
+ #   print f1 $utf8_encoded_json_text;
+ #   close f1;
 
+     store $data, $jsonfile;
+    
 }
 ###############################################################################
 sub UpdateHochschulData() {
@@ -149,12 +167,9 @@ sub UpdateHochschulData() {
     my $enough = 0;
     my $sleeptime;
     my $pending;
-    my $jsonfile = $CONST->{'json_output'};
+    my $jsonfile = $CONST->{'store_file'};
 
     foreach $key (sort {$a <=> $b} keys %{$data}) {
-
-#next if ($data->{$key}->{'url'} !~/fau\.de/i);
-
 
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
@@ -275,12 +290,11 @@ sub GetSingleWikiHochschule {
 
 	if ($res->is_success) {
 
-
-	if ($res->content_charset eq 'UTF-8') {
-	 $html = $res->content;  # or whatever
-	} else {
-	 $html = $res->decoded_content('UTF-8');;  # or whatever
-	}
+	    if ($res->content_charset eq 'UTF-8') {
+		$html = $res->decoded_content;  # or whatever
+	    } else {
+		$html = $res->decoded_content('UTF-8');;  # or whatever
+	    }
 	   
 	} else {
 	    warn $res->status_line;

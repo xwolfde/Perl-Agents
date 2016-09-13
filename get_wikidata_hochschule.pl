@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 
-use open qw/:std :encoding(utf8)/;
 use utf8;
 
 use strict;
