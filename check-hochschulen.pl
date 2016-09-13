@@ -180,7 +180,7 @@ sub WriteHochschulData {
 sub GetParams {
     my $help;
     my $result;
-    my $debug =1;
+    my $debug =0;
     my $usecache =0;
     my $listout;
     my $maxupdate = $CONST->{"max_update"};
