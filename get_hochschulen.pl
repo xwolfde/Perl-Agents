@@ -4,7 +4,6 @@
 # @Created 09.10.2015 16:10:36
 #
 
-use open qw/:std :encoding(utf8)/;
 use utf8;
 
 use strict;
@@ -21,7 +20,7 @@ my $CONST = {
     "cache_file" => 'Liste_der_Hochschulen_in_Deutschland.html',
     "json_output"	=> 'Liste_der_Hochschulen_in_Deutschland.json',
     "useragent"	=> 'Mozilla/5.0',
-    "cachetime_single"	=> 60*60*24*7*30,
+    "cachetime_single"	=> 1, #60*60*24*7*30,
     "max_update"    => 500,
     "unityp"	    => 'staatlich',
 };
@@ -153,6 +152,10 @@ sub UpdateHochschulData() {
     my $jsonfile = $CONST->{'json_output'};
 
     foreach $key (sort {$a <=> $b} keys %{$data}) {
+
+#next if ($data->{$key}->{'url'} !~/fau\.de/i);
+
+
 	if ($params->{'debug'}) {
 	    print STDERR $key."\n";
 	    print STDERR "\tWikiurl: \"".$data->{$key}->{'wikiurl'}."\"\n";
@@ -174,7 +177,7 @@ sub UpdateHochschulData() {
 		}
 		$gotdata++;
 		$adddata = GetSingleWikiHochschule($data->{$key}->{'wikiurl'});
-		$sleeptime = int(rand(4))+1;		
+		$sleeptime = int(rand(2))+1;		
 		print STDERR "\t\twaiting $sleeptime seconds...\n" if ($params->{'debug'});
 		sleep($sleeptime);
 
@@ -191,6 +194,18 @@ sub UpdateHochschulData() {
 		    }
 		}
 
+		if ($adddata->{'Ort'}) {
+		    $data->{$key}->{'Ort'} = $adddata->{'Ort'};
+		} 
+		if ($adddata->{'Trägerschaft'}) {
+		    if ($adddata->{'Trägerschaft'} =~ /staatlich/i) {
+			$data->{$key}->{'Traeger'} = 'staatlich';
+		    } elsif ($adddata->{'Trägerschaft'} =~ /privat/i) {
+			$data->{$key}->{'Traeger'} = 'privat';
+		    } elsif ($adddata->{'Trägerschaft'} =~ /konfessionell/i) {
+			$data->{$key}->{'Traeger'} = 'konfessionell';
+		    }
+		}
 		if (($params->{"maxupdate"}) && ($gotdata>$params->{"maxupdate"})) {
 		    $enough = 1;
 		    # again: we dont want to make a brute force on wikipedia
@@ -230,7 +245,7 @@ sub GetSingleWikiHochschule {
     	
     		# Create a request
 	
-    	my $req = HTTP::Request->new(GET => $url);
+    #	my $req = HTTP::Request->new(GET => $url);
 	    	# Pass request to the user agent and get a response back
 	my $res;
 	my $out;
@@ -259,7 +274,14 @@ sub GetSingleWikiHochschule {
 	my $statuscode = $res->code;
 
 	if ($res->is_success) {
-	    $html = $res->decoded_content;  # or whatever
+
+
+	if ($res->content_charset eq 'UTF-8') {
+	 $html = $res->content;  # or whatever
+	} else {
+	 $html = $res->decoded_content('UTF-8');;  # or whatever
+	}
+	   
 	} else {
 	    warn $res->status_line;
 	    return $out;
