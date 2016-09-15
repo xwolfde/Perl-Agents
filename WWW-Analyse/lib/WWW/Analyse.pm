@@ -337,7 +337,7 @@ sub get {
 	local $SIG{ALRM} = sub { die "timeout\n" };
 
     	my $ua = LWP::UserAgent->new( timeout => 5, keep_alive => 1 );
-	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0 );
+	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0,  );
     	$ua->agent($obj->useragent());
     		# Create a request
 	$ua->default_header(
@@ -374,6 +374,21 @@ sub get {
 		return 0;
  	}
 	my $plaincontent;	    	
+
+	if (($res->code==200) && ($res->content =~/meta\s+http\-equiv\s*=\s*\"refresh\"\s+content=\"([^><]+)\"/i)) {
+	    my $redir = $1;
+	    my ($time, $target) = split(/;\s*URL=/,$redir,2);
+	    if ($time==0) {
+		if ($target=~ /^http/i) {
+		    return $obj->get($target);
+		} elsif ($target =~ /^\//i) {
+		    my $newtarget = $url.$target;
+		    return $obj->get($newtarget);
+		}
+	    }
+	}
+
+
 	my $statuscode = $res->code;
 	$obj->{'last-modified'} = $res->header('last-modified') || $res->{'_headers'}->{'last-modified'};
 	$obj->statuscode($statuscode);
