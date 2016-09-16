@@ -164,7 +164,10 @@ sub findgenerator {
 	} elsif ($content =~ /powered by TYPO3/i) {
 		$generator = "TYPO3";
 	} elsif ($content =~ /resourceplone\.app/i) {
-		$generator = "TYPO3";
+		$generator = "Plone";
+	} elsif ($content =~ /\/tucal[0-9]*\//i) {
+	    # https://www.tu-chemnitz.de/urz/www/tucal.html
+		$generator = "TUCAL";
 	}
 	return $generator;
 }
