@@ -30,3 +30,13 @@ Einfaches Skript um eine Liste von Webseiten oder auch via Parameter  --url=http
 
 Einfaches perlskript zum Auslesen der Store-Datei
   
+
+
+## Autor 
+
+  Wolfgang Wiese (xwolf)
+
+
+## CREDITS & COPYRIGHT
+
+GNU General Public License (GPL) Version 2 
