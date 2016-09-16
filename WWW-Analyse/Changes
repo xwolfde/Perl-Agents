@@ -1,6 +1,0 @@
-Revision history for Perl extension WWW::Analyse.
-
-0.01  Wed Jul  8 11:39:50 2009
-	- original version; created by h2xs 1.23 with options
-		-XA -n WWW::Analyse
-
