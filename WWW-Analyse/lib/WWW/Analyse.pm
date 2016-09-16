@@ -163,6 +163,8 @@ sub findgenerator {
 		$generator = "Microsoft SharePoint";
 	} elsif ($content =~ /powered by TYPO3/i) {
 		$generator = "TYPO3";
+	} elsif ($content =~ /powered by cellms/i) {
+		$generator = "cellms";
 	} elsif ($content =~ /resourceplone\.app/i) {
 		$generator = "Plone";
 	} elsif ($content =~ /\/tucal[0-9]*\//i) {
