@@ -343,7 +343,7 @@ sub get {
 	local $SIG{ALRM} = sub { die "timeout\n" };
 
     	my $ua = LWP::UserAgent->new( timeout => 5, keep_alive => 1 );
-	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0,  );
+	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0);
     	$ua->agent($obj->useragent());
     		# Create a request
 	$ua->default_header(
@@ -353,8 +353,6 @@ sub get {
 	);
 
 
-#    	my $req = HTTP::Request->new(GET => $url);
-	    	# Pass request to the user agent and get a response back
 	my $res;
 
 	eval {
@@ -365,7 +363,7 @@ sub get {
 		} else {		
 			my $statuscode = $res->code;
 			$obj->statuscode($statuscode);
-			die "Cannot connect to $url  - Error ".$res->code."\n";
+			die "Cannot connect to $url  - Error ".$res->code."\n".$res->content."\n";
 		}
 	};
 	alarm(0);
@@ -373,7 +371,11 @@ sub get {
 		if ($@ =~ /timeout/) {
  		        warn "request timed out";
      		} else {
+	#	    if ($res->code==500) {
+	#		print $res->content;
+	#	    } else {
          		warn "error in request: $@";
+	#	    }
     		 }
 		 $obj->status(0);
 		
