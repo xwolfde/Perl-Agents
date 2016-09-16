@@ -161,8 +161,9 @@ sub findgenerator {
 		$generator = "TYPO3";
 	} elsif ($content =~ /default\.aspx/i) {
 		$generator = "Microsoft SharePoint";
-
 	} elsif ($content =~ /powered by TYPO3/i) {
+		$generator = "TYPO3";
+	} elsif ($content =~ /resourceplone\.app/i) {
 		$generator = "TYPO3";
 	}
 	return $generator;
