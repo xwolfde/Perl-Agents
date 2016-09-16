@@ -390,7 +390,11 @@ sub get {
 		if ($target=~ /^http/i) {
 		    return $obj->get($target);
 		} elsif ($target =~ /^\//i) {
-		    my $newtarget = $url.$target;
+		   my $domain = $url;
+		   if ($domain =~ /(^http(s)?:\/\/[^\/]+)/i) {
+			$domain = $1;
+		   }
+		    my $newtarget = $domain.$target;
 		    return $obj->get($newtarget);
 		}
 	    }
