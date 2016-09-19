@@ -159,8 +159,6 @@ sub findgenerator {
 	    $generator = "Weblication Content Management Server";
 	} elsif ($content =~ /typo3temp/i) {
 		$generator = "TYPO3";
-	} elsif ($content =~ /default\.aspx/i) {
-		$generator = "Microsoft SharePoint";
 	} elsif ($content =~ /powered by TYPO3/i) {
 		$generator = "TYPO3";
 	} elsif ($content =~ /powered by cellms/i) {
