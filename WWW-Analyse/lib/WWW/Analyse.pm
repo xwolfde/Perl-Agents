@@ -15,6 +15,8 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
 our $VERSION = '1.01';
 
+my $DEBUG = 1;
+
 my $matchgenlist = {
     'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
     'Total WordPress Theme 3.5.2'   => 'WordPress',
@@ -116,7 +118,6 @@ sub findgenerator {
 		$generator = $newgen;
 	}
 
-
 	if ($generator) {
 		my $resgen;	
 		if ($generator =~ /^Web-Baukasten der/i) {
@@ -131,10 +132,11 @@ sub findgenerator {
 		} else {
 			$resgen = $generator;
 		}
-
-		
-		return $resgen;
+		if ($resgen)  { return $resgen; }
 	}
+	
+	print "Kein Generator gefunden. Versuche Content Analyse\n" if ($DEBUG>1);
+	
 	my $content = $obj->getcontent();
 	if ($content =~ /\/wp\-content\/themes\//i) {
 		$generator = "WordPress";
@@ -169,6 +171,11 @@ sub findgenerator {
 	    # https://www.tu-chemnitz.de/urz/www/tucal.html
 		$generator = "TUCAL";
 	}
+	if (not $generator) {
+	#   print $content;
+	}
+	
+	
 	return $generator;
 }
 ##############################################################################
@@ -274,38 +281,42 @@ sub webbaukasten {
 		&& ($content =~ /<div id="content">/i)		
 		&& ($content =~ /<div id="footer">/i)) {
 			$obj->{'body'}->{'data'}->{'webbaukasten'} = "1";
+			
+			
+			if ($content =~ /\/css\/fau\-2016\/layout\.css/i) {
+			    $obj->{'body'}->{'data'}->{'webbaukasten'} = "FAU-Design 2016";
+			} elsif ($content =~ /\/patches\/patch.css\" rel=\"stylesheet\" type=\"text\/css\" \/>/i) {
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "07/2011";
+			} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=iso\-8859\-1"/i) {
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
+			} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=utf\-8"/i) { 
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "10/2008 bis 06/2009";
+			} elsif ($content =~ /\/wp\-content\/themes\/WKE2014/i) {
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "Wordpress Theme WKE2014";
+			} else {
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
+			}
+			
+			# versuche relaunch-Datum anhand des datums der Datei vkdaten/vorlagen.conf zu ermitteln
+
+			my $vkconffile = $obj->url();
+			$vkconffile .= "/vkdaten/vorlagen.conf";
+			my $vkinfo = $obj->getwebfileinfo($vkconffile);
+			if (($vkinfo) && ($vkinfo->{'last-modified'})) {
+				$obj->{'body'}->{'data'}->{'webbaukasten_relauch'} = $vkinfo->{'last-modified'};
+
+			}
+			if ($DEBUG) {
+			    use Data::Dumper;
+			    print Dumper($vkinfo);
+			}
 		}
 	}
 	
-	if ($obj->{'body'}->{'data'}->{'webbaukasten'} eq "1") {
-		# Alte Version, vor 9.7.2009  oder Versionen die keinen metatag fuehren
-		# versuche Version zu ermitteln.
-		if ($content =~ /\/css\/fau\-2016\/layout\.css/i) {
-                        $obj->{'body'}->{'data'}->{'webbaukasten'} = "FAU-Design 2016";
-                } elsif ($content =~ /\/patches\/patch.css" rel="stylesheet" type="text\/css" \/>/i) {
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "07/2011";
-		} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=iso\-8859\-1"/i) {
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
-		} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=utf\-8"/i) { 
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "10/2008 bis 06/2009";
-		} elsif ($content =~ /\/wp\-content\/themes\/WKE2014/i) {
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "Wordpress Theme WKE2014";
-		} else {
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
-		}					
-	}
+
 	
-	# versuche relaunch-Datum anhand des datums der Datei vkdaten/vorlagen.conf zu ermitteln
 	
-	my $vkconffile = $obj->url();
-	$vkconffile .= "/vkdaten/vorlagen.conf";
-	my $vkinfo = $obj->getwebfileinfo($vkconffile);
-	if (($vkinfo) && ($vkinfo->{'last-modified'})) {
-		$obj->{'body'}->{'data'}->{'webbaukasten_relauch'} = $vkinfo->{'last-modified'};
-		
-	}
-#	use Data::Dumper;
-#	print Dumper($vkinfo);
+
 	
 	
 	return $obj->{'body'}->{'data'}->{'webbaukasten'};	
@@ -344,9 +355,11 @@ sub get {
 	$ua->ssl_opts( "timeout" => 5, "Timeout" => 5, "verify_hostname" => 0);
     	$ua->agent($obj->useragent());
     		# Create a request
+	my $can_accept = HTTP::Message::decodable;
 	$ua->default_header(
 	    'Accept-Language' => 'de,en-US;q=0.7,en;q=0.3',
 	    'Accept-Charset' => 'utf-8',
+	    'Accept-Encoding' => $can_accept,
 	    'Accept' => 'image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, image/png, */*'
 	);
 
@@ -581,6 +594,14 @@ sub getheader {
 	if (not $obj->status){
 		return;	
 	}
+	
+	if ($DEBUG>1) {
+	    use Data::Dumper();
+	    print "Response.Header:\n";
+	    print Dumper($obj->response->{'_headers'});
+	    print "\n";
+	}
+	
 	if (not $var) {
 		return $obj->response->{'_headers'};		
 	} else {
@@ -604,6 +625,7 @@ sub getcontent {
 	if (not $self->status) {
 		return;	
 	}
+	
 	return $self->response->decoded_content(default_charset => 'UTF-8');	
 }
 ##############################################################################
@@ -699,7 +721,7 @@ Wolfgang Wiese, E<lt>xwolf@xwolf.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2015 by Wolfgang Wiese
+Copyright (C) 2009-2017 by Wolfgang Wiese
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
