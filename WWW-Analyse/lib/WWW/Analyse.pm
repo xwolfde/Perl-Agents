@@ -147,7 +147,10 @@ sub findgenerator {
 	print "Kein Generator gefunden. Versuche Content Analyse\n" if ($DEBUG>1);
 	
 	my $content = $obj->getcontent();
-	if ($content =~ /\/wp\-content\/themes\//i) {
+	
+	if ($content =~ /<meta name=\"generator\" content=\"([^<>]+)\"/i) {
+	    $generator = $1;
+	} elsif ($content =~ /\/wp\-content\/themes\//i) {
 		$generator = "WordPress";
 		if ($content =~ /\/wp\-includes\/css\/dashicons\.min\.css\?ver=([0-9\.]+)/i) {	
 			$generator .= " ".$1;
@@ -396,6 +399,8 @@ sub get {
 			    print $res->content;
 			} else {
 			    warn "error in request: $@";
+			    
+			    
 			}
 		    }
     		 }
