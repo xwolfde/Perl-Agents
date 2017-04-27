@@ -391,13 +391,15 @@ sub get {
 		if ($@ =~ /timeout/) {
  		        warn "request timed out";
      		} else {
-		    if (DEBUG) {
+		    if ($DEBUG) {
 			if ($res->code==500) {
 			    print $res->content;
 			} else {
 			    warn "error in request: $@";
 			}
-		    }
+		    } else {
+			warn "error on access";
+			}
     		 }
 		 $obj->status(0);
 		
