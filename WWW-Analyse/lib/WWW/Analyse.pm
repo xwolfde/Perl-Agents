@@ -282,47 +282,47 @@ sub webbaukasten {
 		} else {
 			$obj->{'body'}->{'data'}->{'webbaukasten'} = "1";			
 		}
-	}
-	my $content = $obj->getcontent();
-	if (not $obj->{'body'}->{'data'}->{'webbaukasten'}) {			
-		if (($content =~ /<div id="seite"/i) 
-		&& ($content =~ /<div id="kopf">/i)
-		&& ($content =~ /<div id="content">/i)		
-		&& ($content =~ /<div id="footer">/i)) {
-			$obj->{'body'}->{'data'}->{'webbaukasten'} = "1";
-			
-			
-			if ($content =~ /\/css\/fau\-2016\/layout\.css/i) {
-			    $obj->{'body'}->{'data'}->{'webbaukasten'} = "FAU-Design 2016";
-			} elsif ($content =~ /\/patches\/patch.css\" rel=\"stylesheet\" type=\"text\/css\" \/>/i) {
-				$obj->{'body'}->{'data'}->{'webbaukasten'} = "07/2011";
-			} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=iso\-8859\-1"/i) {
-				$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
-			} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=utf\-8"/i) { 
-				$obj->{'body'}->{'data'}->{'webbaukasten'} = "10/2008 bis 06/2009";
-			} elsif ($content =~ /\/wp\-content\/themes\/WKE2014/i) {
-				$obj->{'body'}->{'data'}->{'webbaukasten'} = "Wordpress Theme WKE2014";
-			} else {
-				$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
-			}
-			
-			# versuche relaunch-Datum anhand des datums der Datei vkdaten/vorlagen.conf zu ermitteln
+	
+		my $content = $obj->getcontent();
+		if (not $obj->{'body'}->{'data'}->{'webbaukasten'}) {			
+			if (($content =~ /<div id="seite"/i) 
+			&& ($content =~ /<div id="kopf">/i)
+			&& ($content =~ /<div id="content">/i)		
+			&& ($content =~ /<div id="footer">/i)) {
+				$obj->{'body'}->{'data'}->{'webbaukasten'} = "1";
 
-			my $vkconffile = $obj->url();
-			$vkconffile .= "/vkdaten/vorlagen.conf";
-			my $vkinfo = $obj->getwebfileinfo($vkconffile);
-			if (($vkinfo) && ($vkinfo->{'last-modified'})) {
-				$obj->{'body'}->{'data'}->{'webbaukasten_relauch'} = $vkinfo->{'last-modified'};
 
-			}
-			if ($DEBUG) {
-			    use Data::Dumper;
-			    print Dumper($vkinfo);
+				if ($content =~ /\/css\/fau\-2016\/layout\.css/i) {
+				    $obj->{'body'}->{'data'}->{'webbaukasten'} = "FAU-Design 2016";
+				} elsif ($content =~ /\/patches\/patch.css\" rel=\"stylesheet\" type=\"text\/css\" \/>/i) {
+					$obj->{'body'}->{'data'}->{'webbaukasten'} = "07/2011";
+				} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=iso\-8859\-1"/i) {
+					$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
+				} elsif ($content =~ /<meta http\-equiv="Content\-Type"\s+content="text\/html;\s+charset=utf\-8"/i) { 
+					$obj->{'body'}->{'data'}->{'webbaukasten'} = "10/2008 bis 06/2009";
+				} elsif ($content =~ /\/wp\-content\/themes\/WKE2014/i) {
+					$obj->{'body'}->{'data'}->{'webbaukasten'} = "Wordpress Theme WKE2014";
+				} else {
+					$obj->{'body'}->{'data'}->{'webbaukasten'} = "09/2006 bis 10/2008";
+				}
+
+				# versuche relaunch-Datum anhand des datums der Datei vkdaten/vorlagen.conf zu ermitteln
+
+				my $vkconffile = $obj->url();
+				$vkconffile .= "/vkdaten/vorlagen.conf";
+				my $vkinfo = $obj->getwebfileinfo($vkconffile);
+				if (($vkinfo) && ($vkinfo->{'last-modified'})) {
+					$obj->{'body'}->{'data'}->{'webbaukasten_relauch'} = $vkinfo->{'last-modified'};
+
+				}
+				if ($DEBUG) {
+				    use Data::Dumper;
+				    print Dumper($vkinfo);
+				}
 			}
 		}
-	}
 	
-
+	}
 	
 	
 
