@@ -96,7 +96,7 @@ sub compactanalyse {
 	my $res = $website->get();
 	my $info;	
 	my $modidate = $website->getheader("Date") || $website->getheader("last-modified") || $website->{'last-modified'};
-	my $title =  	$website->getheader("Title");
+	my $title =  	$website->get_pagetitle("Title");
 	$url =~ s/http(s|):\/\///gi;
 	if (not $res) {
 		my $statuscode = $website->statuscode();
