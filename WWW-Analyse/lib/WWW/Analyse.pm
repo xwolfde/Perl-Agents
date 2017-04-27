@@ -13,9 +13,9 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.01';
+our $VERSION = '1.03';
 
-my $DEBUG = 1;
+my $DEBUG = 0;
 
 my $matchgenlist = {
     'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
@@ -31,6 +31,15 @@ sub get_pagetitle {
 	return;
     }
     my $title = $obj->getheader("Title");
+    
+    if (not $title) {
+	my $content = $obj->getcontent();
+	if ($content =~ /<title>([^<>]+)<\/title>/i) {
+	    $title = $1;
+	}
+    }
+    
+    
     if (ref($title) eq 'ARRAY') {
 	my $i;
 	my @tl = @{$title};

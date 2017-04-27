@@ -199,7 +199,7 @@ sub analyse {
 	my $list = $website->getheaderlinks();
 	
 	print "$url\t";
-	print $website->getheader("Title");
+	print $website->get_pagetitle("Title");
 	print "\n";
 	
 	
