@@ -124,7 +124,7 @@ sub compactanalyse {
 	
 
 	
-	if ($version) {					
+	if (($version) && ($gen =~/Webbaukasten/i) ){					
 		foreach $key (sort {$a <=> $b}keys %{$list}) {
 			if (($list->{$key}->{'type'} =~ /css/i) && ($list->{$key}->{'media'} !~ /alternate/i)) {
 				if (($list->{$key}->{'media'} =~ /projection/i)
