@@ -397,9 +397,7 @@ sub get {
 			} else {
 			    warn "error in request: $@";
 			}
-		    } else {
-			warn "error on access";
-			}
+		    }
     		 }
 		 $obj->status(0);
 		
