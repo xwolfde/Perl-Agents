@@ -13,7 +13,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 my $DEBUG = 0;
 
@@ -40,7 +40,7 @@ sub get_pagetitle {
 	}
     }
     if ($title) {
-	$title =~s/\t+//gi;
+	$title =~s/[\t\n\r]+//gi;
     }
     if (ref($title) eq 'ARRAY') {
 	my $i;
@@ -48,6 +48,7 @@ sub get_pagetitle {
 	my $res;
 	for ($i=0;$i<=$#tl;$i++) {
 	   # $res .= decode( "utf8", $tl[$i])." | ";
+	   $tl[$i] =~s/[\t\n\r]+//gi;
 	    $res .= $tl[$i]." | "; 
 	}
 	$res =~ s/ \| $//g;
