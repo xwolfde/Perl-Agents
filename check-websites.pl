@@ -97,6 +97,8 @@ sub compactanalyse {
 	my $info;	
 	my $modidate = $website->getheader("Date") || $website->getheader("last-modified") || $website->{'last-modified'};
 	my $title =  	$website->get_pagetitle("Title");
+	$title =~ s/[\t<>]+//gi;
+	
 	$url =~ s/http(s|):\/\///gi;
 	if (not $res) {
 		my $statuscode = $website->statuscode();
@@ -180,7 +182,9 @@ sub compactanalyse {
 		}
 			
 	}
-	
+	if ($website->is_ssldomain()) {
+	    $url =~s/^http:/https:/i;
+	}
 	printf "%-45s\t%-50s\t%s\n",$url,$title,$info;
 	return;
 }
@@ -193,14 +197,17 @@ sub analyse {
 	my $status = $website->get();
 	if ($status==0) {
 		print STDERR "Fehler. Website konnte nicht ausgelesen werden. Code: ", $website->statuscode(), "\n";
-		return;
+	#	return;
 	}
 
 	my $list = $website->getheaderlinks();
-	
+	if ($website->is_ssldomain()) {
+	    $url =~s/^http:/https:/i;
+	}
 	print "$url\t";
 	print $website->get_pagetitle("Title");
 	print "\n";
+	
 	
 	
 	my $key;
