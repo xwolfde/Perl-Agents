@@ -13,9 +13,9 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
-my $DEBUG = 2;
+my $DEBUG = 0;
 
 my $matchgenlist = {
     'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
