@@ -13,7 +13,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 
 my $DEBUG = 0;
 
@@ -167,7 +167,7 @@ sub findgenerator {
 	
 	my $thisurl = $obj->url();
 	if ($thisurl =~ /\.wiki\.fau\.de/i) {
-	    return "Mediawiki Service RRZE";
+	    return "MediaWiki Service RRZE";
 	}
 	
 	
