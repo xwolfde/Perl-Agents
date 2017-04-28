@@ -99,7 +99,13 @@ sub compactanalyse {
 	my $title =  	$website->get_pagetitle("Title");
 	$title =~ s/[\t<>]+//gi;
 	
-	$url =~ s/http(s|):\/\///gi;
+#	$url =~ s/http(s|):\/\///gi;
+	
+	if ($website->is_ssldomain()) {
+	    $url =~s/^http:/https:/i;
+	}
+	
+	
 	if (not $res) {
 		my $statuscode = $website->statuscode();
 		if (not $title) {
