@@ -13,7 +13,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 my $DEBUG = 0;
 
@@ -126,12 +126,21 @@ sub findgenerator {
 	if (not $obj->{'parserstatus'}) {
                 $obj->parser();
         }
+	my $content = $obj->getcontent();
 	my $generator = $obj->getheader("x-meta-generator");
-	if (ref($generator) eq 'ARRAY') {
+	if (not $generator) {	  
+	    if ($content =~ /<meta name=\"generator\" content=\"([^<>]+)\"/i) {
+		$generator = $1;
+	    }
+	} elsif (ref($generator) eq 'ARRAY') {
 		my $newgen;
 		$newgen = $generator->[0];
 		$generator = $newgen;
 	}
+	
+
+
+
 
 	if ($generator) {
 		my $resgen;	
@@ -157,7 +166,7 @@ sub findgenerator {
 	    return "Mediawiki Service RRZE";
 	}
 	
-	my $content = $obj->getcontent();
+	
 	
 	if ($content =~ /<meta name=\"generator\" content=\"([^<>]+)\"/i) {
 	    $generator = $1;
@@ -222,7 +231,7 @@ sub normalize_generator {
 	$name = "WordPress";
 	if ($gen =~ /^WordPress\s+([0-9\.]+)/i) {
 	    $version = $1;
-	} 
+	} 	
     } elsif ($gen =~ /^Plone/i) {
 	$name = "Plone";
 	
