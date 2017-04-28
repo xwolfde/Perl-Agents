@@ -13,7 +13,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 my $DEBUG = 0;
 
@@ -146,6 +146,9 @@ sub findgenerator {
 		my $resgen;	
 		if ($generator =~ /^Web-Baukasten der/i) {
 			$resgen = "RRZE Webbaukasten";
+		} elsif ($generator =~ /^Vorlagenkatalog/i) {
+		    $resgen = "RRZE Webbaukasten";
+		    
 		} elsif ($generator =~ /^Blogdienst der FAU/i) {
 			$resgen = "WordPress";
 			if ($generator =~ /([0-9\.]+)\s*$/i) {
@@ -305,9 +308,7 @@ sub webbaukasten {
 		} else {
 			$obj->{'body'}->{'data'}->{'webbaukasten'} = "1";			
 		}
-	
 		my $content = $obj->getcontent();
-		if (not $obj->{'body'}->{'data'}->{'webbaukasten'}) {			
 			if (($content =~ /<div id="seite"/i) 
 			&& ($content =~ /<div id="kopf">/i)
 			&& ($content =~ /<div id="content">/i)		
@@ -343,7 +344,7 @@ sub webbaukasten {
 				    print Dumper($vkinfo);
 				}
 			}
-		}
+		
 	
 	}
 	
