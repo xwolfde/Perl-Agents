@@ -13,9 +13,9 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
-my $DEBUG = 0;
+my $DEBUG = 2;
 
 my $matchgenlist = {
     'Powered by Visual Composer - drag and drop page builder for WordPress' => 'WordPress',
@@ -30,16 +30,18 @@ sub get_pagetitle {
     if (not $obj) {
 	return;
     }
-    my $title = $obj->getheader("Title");
+    my $title = '';
+    $title = $obj->getheader("Title");
     
     if (not $title) {
 	my $content = $obj->getcontent();
-	if ($content =~ /<title>([^<>]+)<\/title>/i) {
+	if (($content) && ($content =~ /<title>([^<>]+)<\/title>/i)) {
 	    $title = $1;
 	}
     }
-    
-    
+    if ($title) {
+	$title =~s/\t+//gi;
+    }
     if (ref($title) eq 'ARRAY') {
 	my $i;
 	my @tl = @{$title};
@@ -79,7 +81,11 @@ sub findtracker {
         my $foundtracker = 0;
         $obj->{'body'}->{'data'}->{'tracker'} = ();
 	
-	my $content = $obj->getcontent();
+	my $content;
+	$content = $obj->getcontent();
+	if (not $content) {
+	    $content = '';
+	}
 	if (($content =~ /_uacct/i) || ($content =~ /_gat\._getTracker\(/i)) {
 		# Suche nach Google Analytics
 		$obj->{'body'}->{'data'}->{'tracker'}->{'Google-Analytics'} =1;
@@ -145,6 +151,11 @@ sub findgenerator {
 	}
 	
 	print "Kein Generator gefunden. Versuche Content Analyse\n" if ($DEBUG>1);
+	
+	my $thisurl = $obj->url();
+	if ($thisurl =~ /\.wiki\.fau\.de/i) {
+	    return "Mediawiki Service RRZE";
+	}
 	
 	my $content = $obj->getcontent();
 	
@@ -392,21 +403,37 @@ sub get {
 	alarm(0);
 	if ($@) {
 		if ($@ =~ /timeout/) {
- 		        warn "request timed out";
+ 		        warn "request timed out";	
+			$obj->status(0);
+		
+			return 0;
      		} else {
-		    if ($DEBUG) {
+		   
 			if ($res->code==500) {
-			    print $res->content;
+			    if ($DEBUG) {
+				print $res->content;
+			    } 
+			    $obj->status(0);
+			    return 0;
 			} else {
-			    warn "error in request: $@";
 			    
+			    if ($res->code ==404) {
+				# hier koennen wir die serverantwort trotzdem nach dem generator und titel analysierem
+				 } elsif ($res->code ==401) {
+			    } elsif ($res->code ==403) {
+				# hier koennen wir die serverantwort trotzdem nach dem generator und titel analysierem
+			    } else { 
+				if ($DEBUG) {
+				    warn "error in request: $@";
+				}
+				$obj->status(0);
+				return 0;
+			    }
 			    
 			}
-		    }
+		    
     		 }
-		 $obj->status(0);
 		
-		return 0;
  	}
 	my $plaincontent;	    	
 
@@ -431,7 +458,7 @@ sub get {
 	my $statuscode = $res->code;
 	$obj->{'last-modified'} = $res->header('last-modified') || $res->{'_headers'}->{'last-modified'};
 	$obj->statuscode($statuscode);
-    	if ($statuscode<400) {
+    	if ($statuscode<500) {
       		$obj->response($res);
       		$obj->status(1);
       		return 1;
@@ -440,6 +467,20 @@ sub get {
         	return 0; 	        
         }
         
+}
+##############################################################################
+sub is_ssldomain {
+    my $obj = shift;
+	if (not $obj->status){
+		return;	
+	}
+	
+	if ($obj->response->{'_headers'}->{'client-ssl-cert-issuer'}) {
+	    return 1;
+	    }
+    return 0;
+    
+    
 }
 ##############################################################################
 sub getdocumentimages {
@@ -485,6 +526,9 @@ sub parser {
 
 	$obj->{'parser'}->eof;	     			
 	my $content = $obj->getcontent;	
+	if (not $content) {
+	    $content = '';
+	}
 	$obj->{'parser'}->parse($content);
 	$obj->{'body'}->{'data'} = $data;
 	$obj->{'parserstatus'} = 1;
@@ -641,8 +685,11 @@ sub getcontent {
 	if (not $self->status) {
 		return;	
 	}
-	
-	return $self->response->decoded_content(default_charset => 'UTF-8');	
+	my $out = $self->response->decoded_content(default_charset => 'UTF-8');
+	if ($out) {
+	    return $out;
+	}
+	return "";	
 }
 ##############################################################################
 sub statuscode {
