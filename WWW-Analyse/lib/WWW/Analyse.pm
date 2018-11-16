@@ -155,6 +155,16 @@ sub findgenerator {
 			if ($generator =~ /([0-9\.]+)\s*$/i) {
 			   $resgen  .= " ".$1;
 			}
+		} elsif ($generator =~ /^Total WordPress Theme/i) {
+		    	$resgen = "WordPress";
+			if ($generator =~ /([0-9\.]+)\s*$/i) {
+			   $resgen  .= " ".$1;
+			}
+		} elsif ($generator =~ /^WPML /i) {
+		    	$resgen = "WordPress";
+			if ($generator =~ /([0-9\.]+)\s*$/i) {
+			   $resgen  .= " ".$1;
+			}	
 		} elsif ($matchgenlist->{$generator}) {
 		    $resgen = $matchgenlist->{$generator};
 		} else {
